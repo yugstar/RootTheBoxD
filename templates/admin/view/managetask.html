@@ -1,0 +1,313 @@
+{% extends "../../main.html" %}
+
+{% block title %}{{_("Task Management")}}{% end %}
+
+{% block header %}
+<link rel="stylesheet" href="/static/css/jquery-ui.css">
+<script src="/static/js/pages/admin/users.js"></script>
+{% end %}
+
+{% block modals %}
+{% from models.Task import Task %}
+{% from models.Team import Team %}
+{% from libs.XSSImageCheck import filter_avatars %}
+{% from libs.XSSImageCheck import existing_avatars %}
+{% from tornado.options import options %}
+{% set tasks = Task.all() %}
+{% set teams = Team.all() %}
+    <!-- Change Avatar -->
+    {% if options.tasks %}
+        {% set dir = "team" %}
+    {% else %}
+        {% set dir = "user" %}
+    {% end %}
+    {% set avatars = filter_avatars(dir) %}
+    {% set existing = existing_avatars("team") %}
+    <div id="change-team-avatar-modal" class="modal hide fade" style="z-index: 100000; display: none; {% if len(avatars) > 0 %}width: 750px; margin-left: -375px;{% end %}">
+        <div class="modal-header">
+            <button id="team-avatar-form" type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>{{_("Change")}} {% if options.teams %}{{_("Team")}} {% end %}{{_("Avatar")}}</h3>
+        </div>
+        <div class="modal-body">
+            <form action="/user/settings/team_avatar" method="post" enctype="multipart/form-data">
+                {% raw xsrf_form_html() %}
+                    {% for avatar in avatars[::3] %}
+                        <div class="row">
+                            <div class="span3" style="position: relative;">
+                                <center>
+                                    {% if avatar in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                    <a href="#" class="teamavatarimg" value="{{avatar}}"><img src="/avatars/{{avatar}}"  class="img-polaroid" style="width: 200px;"></a>
+                                </center>
+                            </div>
+                            {% if avatars.index(avatar) + 1 < len(avatars) %}
+                                {% set avatar1 = avatars[avatars.index(avatar) + 1] %}
+                                <div class="span3" style="position: relative;">
+                                    <center>
+                                        {% if avatar1 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                        <a href="#" class="teamavatarimg" value="{{avatar1}}"><img src="/avatars/{{avatar1}}"  class="img-polaroid" style="width: 200px;"></a>
+                                    </center>
+                                </div>
+                            {% end %}
+                            {% if avatars.index(avatar) + 2 < len(avatars) %}
+                                {% set avatar2 = avatars[avatars.index(avatar) + 2] %}
+                                <div class="span3" style="position: relative;">
+                                    <center>
+                                        {% if avatar2 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                        <a href="#" class="teamavatarimg" value="{{avatar2}}"><img src="/avatars/{{avatar2}}"  class="img-polaroid" style="width: 200px;"></a>
+                                    </center>
+                                </div>
+                            {% end %}
+                        </div>
+                        <br/>
+                    {% end %}
+            </form>
+        </div>
+    </div>
+    {% set avatars = filter_avatars("user") %}
+    {% set existing = existing_avatars("user") %}
+    <div id="change-user-avatar-modal" class="modal hide fade" style="z-index: 100000; display: none; {% if len(avatars) > 0 %}width: 750px; margin-left: -375px;{% end %}">
+        <div class="modal-header">
+            <button id="user-avatar-form" type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>{{_("Change")}} {% if options.teams %}{{_("Player")}} {% end %}{{_("Avatar")}}</h3>
+        </div>
+        <div class="modal-body">
+            <form action="/user/settings/user_avatar" method="post" enctype="multipart/form-data">
+                {% raw xsrf_form_html() %}
+                {% for avatar in avatars[::3] %}
+                        <div class="row">
+                            <div class="span3" style="position: relative;">
+                                <center>
+                                    {% if avatar in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                    <a href="#" class="useravatarimg" value="{{avatar}}"><img src="/avatars/{{avatar}}"  class="img-polaroid" style="width: 200px;"></a>
+                                </center>
+                            </div>
+                            {% if avatars.index(avatar) + 1 < len(avatars) %}
+                                {% set avatar1 = avatars[avatars.index(avatar) + 1] %}
+                                <div class="span3" style="position: relative;">
+                                    <center>
+                                        {% if avatar1 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                        <a href="#" class="useravatarimg" value="{{avatar1}}"><img src="/avatars/{{avatar1}}"  class="img-polaroid" style="width: 200px;"></a>
+                                    </center>
+                                </div>
+                            {% end %}
+                            {% if avatars.index(avatar) + 2 < len(avatars) %}
+                                {% set avatar2 = avatars[avatars.index(avatar) + 2] %}
+                                <div class="span3" style="position: relative;">
+                                    <center>
+                                        {% if avatar2 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                        <a href="#" class="useravatarimg" value="{{avatar2}}"><img src="/avatars/{{avatar2}}"  class="img-polaroid" style="width: 200px;"></a>
+                                    </center>
+                                </div>
+                            {% end %}
+                        </div>
+                        <br/>
+                    {% end %}
+               
+            </form>
+        </div>
+    </div>
+    <!-- Edit Team -->
+    <div id="edit-team-modal" class="modal hide fade" style="display: none; ">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>
+                <i class="fa fa-fw fa-pencil"></i>
+                {% if options.tasks %}{{_("Edit")}} {{_("Task")}}{% else %}{{_("Edit")}} {{_("Player")}}{% end %}
+            </h3>
+        </div>
+        <div class="modal-body">
+            <form id="edit-team-form" class="form-horizontal" method="post" action="/admin/users/edit/task" enctype="multipart/form-data">
+                {% raw xsrf_form_html() %}
+                <input id="team-uuid" name="uuid" type="hidden" />
+                <div class="control-group">
+                    <label class="control-label" for="team-name">{% if options.tasks %}{{_("Task")}}{% else %}{{_("Task")}}{% end %} {{_("Name")}}</label>
+                    <div class="controls">
+                        <input required id="team-name" name="name" maxlength="24" type="text" placeholder="{{_('Team Name')}}">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="team-motto">{% if options.teams %}{{_("Team")}}{% else %}{{_("Player")}}{% end %} {{_("Motto")}}</label>
+                    <div class="controls">
+                        <input required id="team-motto" name="description" maxlength="520" type="text" placeholder="{{_('Team Description')}}">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">
+                            <input id="team-avatar" name="avatar" type="hidden" value="" />
+                            (w500 x h250)<br/>
+                            {% if len(avatars) > 0 %}<a data-toggle="modal" class="btn btn-primary" href="#change-team-avatar-modal"> {{_("Select New Avatar")}} </a><br/><br/>{% end %}
+                            <a id="teamuploadbutton" class="btn btn-primary" href="#">{{_("Upload Avatar")}}</a>
+                            <input id="team-file-avatar" name="avatarfile" type="file" style="display: none;"/>
+                    </label>
+                    <div class="controls">
+                            <img id="team-avatarimg" src="" class="img-polaroid" style="width: 210px; height: 105px; object-fit: cover"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+            <button id="edit-team-submit" type="button" class="btn btn-primary">
+                <i class="fa fa-fw fa-save"></i>
+                {{_("Save")}}
+            </button>
+        </div>
+    </div>
+
+    <div id="delete-team-modal" class="modal hide fade" style="display: none; ">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3><i class="fa fa-fw fa-times-circle-o"></i> {% if options.tasks %}{{_("Delete Task")}}{% else %}{{_("Delete Task")}}{% end %}</h3>
+        </div>
+        <div class="modal-body">
+        <p>
+                {% if options.teams %}{{_("This will delete the task!")}}{% else %}
+                {{_("This will delete the task and the associated information!")}}{% end %}<br><br>{{_("Are you sure you want to delete?")}}<br />
+        </p>
+        <form id="delete-team-form" method="post" action="/admin/users/delete/task">
+            {% raw xsrf_form_html() %}
+            <input id="delete-team-uuid" name="uuid" type="hidden" value="" />
+        </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+            <button id="delete-team-submit" type="button" class="btn btn-danger">
+                <i class="fa fa-fw fa-times-circle-o"></i>
+                {{_("Delete")}}
+            </button>
+        </div>
+    </div>
+    <div id="delete-user-modal" class="modal hide fade" style="display: none; ">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3><i class="fa fa-fw fa-times-circle-o"></i> {{_("Delete User")}}</h3>
+        </div>
+        <div class="modal-body">
+        <p>
+            {{_("Are you sure you want to delete this user?")}} <br />
+        </p>
+        <form id="delete-user-form" method="post" action="/admin/users/delete/user">
+            {% raw xsrf_form_html() %}
+            <input id="delete-user-uuid" name="uuid" type="hidden" value="" />
+        </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+            <button id="delete-user-submit" type="button" class="btn btn-danger">
+                <i class="fa fa-fw fa-times-circle-o"></i>
+                {{_("Delete")}}
+            </button>
+        </div>
+    </div>
+    <!-- Add score to all teams -->
+    <div id="edit-scores-modal" class="modal hide fade" style="display: none; ">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>
+                <i class="fa fa-fw fa-plus"></i>
+                {{_("Add")}} {% if options.banking %}{{_("Money")}}{% else %}{{_("Points")}}{% end %}
+            </h3>
+        </div>
+        <div class="modal-body">
+            <form id="edit-scores-form" class="form-horizontal" method="post" action="/admin/users/edit/teams/scores" enctype="multipart/form-data">
+                {% raw xsrf_form_html() %}
+                <div class="control-group">
+                    <label class="control-label" for="team-money-uuid">{% if options.tasks %}{{_("Task")}}{% else %}{{_("Player")}}{% end %}</label>
+                    <div class="controls">
+                        <select id="team-money-uuid" name="team_uuid">
+                            <option value="all">All</option>
+                            {% for task in tasks %}
+                                <option value="{{ task.uuid }}">{{ task.name }}</option>
+                            {% end %}
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="team-money-add">{% if options.banking %}{{_("Money")}}{% else %}{{_("Points")}}{% end %} {{_("to Add")}}</label>
+                    <div class="controls">
+                        <input id="team-money-add" name="money" type="number" placeholder="{% if options.banking %}{{_('Money')}}{% else %}{{_('Points')}}{% end %} {{_('to Add or Subtract')}}">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="team-message-add">{{_("Notification Message")}}</label>
+                    <div class="controls">
+                        <input id="team-message-add" name="message" type="text" value="{{ _('Your score has been updated') }}">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+            <button id="edit-scores-submit" type="button" class="btn btn-primary">
+                <i class="fa fa-fw fa-save"></i>
+                {{_("Save")}}
+            </button>
+        </div>
+    </div>
+{% end %}
+
+{% block content %}
+{% from models.User import User %}
+{% from models.Team import Team %}
+{% from models.Task import Task %}
+    <!-- Lock Form -->
+    <form id="lock-user-form" action="/admin/lock/user" method="post">
+        {% raw xsrf_form_html() %}
+        <input id="lock-user-uuid" name="uuid" type="hidden" />
+    </form>
+    <!-- Start Visible -->
+    <div class="row-fluid">
+        <div class="span10 offset1">
+            <h1>
+                <i class="fa fa-fw fa-tasks"></i>
+                {{_("Task Management")}}
+            </h1>
+            <br />
+            {% if errors is not None and len(errors) != 0 %}
+                {% for error in errors %}
+                    <div class="alert alert-error">
+                        <a class="close" data-dismiss="alert" href="#">&times;</a>
+                        <h4 class="alert-heading">{{_("ERROR")}}</h4>
+                        {{ error }}
+                    </div>
+                {% end %}
+            {% end %}
+            {% if len(teams) == 0 %}
+                <p class="well"><strong>{{_("No Users")}}</strong></p>
+            {% end %}
+            {% set admins = [] %}
+            {% for user in User.all() %}
+                {% if user.is_admin() %}
+                    {% set admins.append(user) %}
+                {% end %}
+            {% end %}
+            {% for task_index, task in enumerate(tasks) %}
+                {% if options.tasks %}
+                <div class="well">
+                    <h2 style="display:inline;"> {% if options.tasks %}{% if task.name %}<span><strong>{{_("Task Name")}}:</strong> {{ task.name }}&nbsp;&nbsp;</span>{% end %}{% end %}&nbsp;&nbsp;</h2>
+                    <a id="delete-team-button{{ task_index }}" class="btn btn-small btn-danger" data-toggle="modal" href="#delete-team-modal" data-uuid="{{ task.uuid }}" style="float:right;">
+                        <i class="fa fa-fw fa-times-circle-o"></i>
+                        {% if options.tasks %}{{_("Delete Task")}}{% else %}{{_("Delete Player")}}{% end %}
+                    </a>
+                    <a id="edit-team-button{{ task_index }}" class="btn btn-small" data-toggle="modal" href="#edit-team-modal" data-uuid="{{ task.uuid }}" style="float:right; margin-right:10px;">
+                        <i class="fa fa-fw fa-pencil"></i>
+                        {% if options.tasks %}{{_("Edit Task")}}{% else %}{{_("Edit Player")}}{% end %}
+                    </a>
+                    <hr />
+                    <table class="table table-striped">
+                        <thead>
+                            <tr style="display: flex; justify-content: flex-start;">
+                                
+                                <th> {% if options.tasks %}{% if task.description %}<span style="margin-top: -10px; float: right;"><strong><h3>{{_("Description")}}:</h3></strong> {{ task.description }}&nbsp;&nbsp;</span>{% end %}{% end %}</th>
+                                
+                            </tr>
+                        </thead>
+                        
+                    </table>
+                    <img style="margin-bottom: 30px;max-width: 500px;" src="/avatars/{{ task.avatar }}">
+                </div>
+                {% end %}
+            {% end %}
+        </div>
+    </div>
+{% end %}

@@ -1,0 +1,217 @@
+{% extends "../../main.html" %}
+
+{% block title %}{{ _("Shared Files") }}{% end %}    
+{% block header %}
+<script src="/static/js/pages/file_upload/shared_files.js"></script>
+<link rel="stylesheet" href="/static/css/jquery-ui.css">
+<script src="/static/js/pages/admin/users.js"></script>
+{% end %}
+
+{% block modals %}
+{% from models.Team import Team %}
+{% from libs.XSSImageCheck import filter_avatars %}
+{% from libs.XSSImageCheck import existing_avatars %}
+{% from tornado.options import options %}
+{% set teams = Team.all() %}
+<!-- test2 -->
+{% set avatars = filter_avatars("user") %}
+{% set existing = existing_avatars("user") %}
+<div id="change-user-avatar-modal" class="modal hide fade" style="z-index: 100000; display: none; {% if len(avatars) > 0 %}width: 750px; margin-left: -375px;{% end %}">
+    <div class="modal-header">
+        <button id="user-avatar-form" type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>{{_("Change")}} {% if options.teams %}{{_("Player")}} {% end %}{{_("Avatar")}}</h3>
+    </div>
+    <div class="modal-body">
+        <form action="/user/settings/user_avatar" method="post" enctype="multipart/form-data">
+            {% raw xsrf_form_html() %}
+            {% for avatar in avatars[::3] %}
+                    <div class="row">
+                        <div class="span3" style="position: relative;">
+                            <center>
+                                {% if avatar in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                <a href="#" class="useravatarimg" value="{{avatar}}"><img src="/avatars/{{avatar}}"  class="img-polaroid" style="width: 200px;"></a>
+                            </center>
+                        </div>
+                        {% if avatars.index(avatar) + 1 < len(avatars) %}
+                            {% set avatar1 = avatars[avatars.index(avatar) + 1] %}
+                            <div class="span3" style="position: relative;">
+                                <center>
+                                    {% if avatar1 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                    <a href="#" class="useravatarimg" value="{{avatar1}}"><img src="/avatars/{{avatar1}}"  class="img-polaroid" style="width: 200px;"></a>
+                                </center>
+                            </div>
+                        {% end %}
+                        {% if avatars.index(avatar) + 2 < len(avatars) %}
+                            {% set avatar2 = avatars[avatars.index(avatar) + 2] %}
+                            <div class="span3" style="position: relative;">
+                                <center>
+                                    {% if avatar2 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                    <a href="#" class="useravatarimg" value="{{avatar2}}"><img src="/avatars/{{avatar2}}"  class="img-polaroid" style="width: 200px;"></a>
+                                </center>
+                            </div>
+                        {% end %}
+                    </div>
+                    <br/>
+                {% end %}
+           
+        </form>
+    </div>
+</div>
+<!-- Add score to all teams -->
+<div id="edit-scores-modal" class="modal hide fade" style="display: none; ">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>
+            <i class="fa fa-fw fa-plus"></i>
+            {{_("Add")}} {% if options.banking %}{{_("Money")}}{% else %}{{_("Points")}}{% end %}
+        </h3>
+    </div>
+    <div class="modal-body">
+        <form id="edit-scores-form" class="form-horizontal" method="post" action="/admin/uploads/edit/teams/scores" enctype="multipart/form-data">
+            {% raw xsrf_form_html() %}
+            <div class="control-group">
+                <label class="control-label" for="team-money-uuid">{% if options.teams %}{{_("Team")}}{% else %}{{_("Player")}}{% end %}</label>
+                <div class="controls">
+                    <select id="team-money-uuid" name="team_uuid">
+                        <option value="all">All</option>
+                        {% for team in teams %}
+                            <option value="{{ team.uuid }}">{{ team.name }}</option>
+                        {% end %}
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="team-money-add">{% if options.banking %}{{_("Money")}}{% else %}{{_("Points")}}{% end %} {{_("to Add")}}</label>
+                <div class="controls">
+                    <input id="team-money-add" name="money" type="number" placeholder="{% if options.banking %}{{_('Money')}}{% else %}{{_('Points')}}{% end %} {{_('to Add or Subtract')}}">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="team-message-add">{{_("Notification Message")}}</label>
+                <div class="controls">
+                    <input id="team-message-add" name="message" type="text" value="{{ _('Your score has been updated') }}">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+        <button id="edit-scores-submit" type="button" class="btn btn-primary">
+            <i class="fa fa-fw fa-save"></i>
+            {{_("Save")}}
+        </button>
+    </div>
+</div>
+<!-- test2 -->
+<div id="delete-file-upload-modal" class="modal hide fade" style="display: none; ">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>
+            <i class="fa fa-times-circle-o"></i>
+            {{ _("Delete File Upload") }}
+        </h3>
+    </div>
+    <div class="modal-body">
+    <p>
+        {{ _("Are you sure you want to delete this file?") }} <br />
+    </p>
+    <form id="delete-file-upload-form" method="post" action="/admin/uploads/delete">
+        {% raw xsrf_form_html() %}
+        <input id="delete-file-upload-uuid" name="uuid" type="hidden" value="" />
+    </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">{{_("Close")}}</a>
+        <button id="delete-file-upload-submit" type="button" class="btn btn-danger">
+            <i class="fa fa-times-circle-o"></i>
+            {{ _("Delete") }}
+        </button>
+    </div>
+</div>
+<!-- delete file above-->
+
+{% end %}
+<!-- test1 -->
+
+
+<!-- test1 -->
+{% block content %}
+{% from models.Team import Team %}
+<!-- test -->
+<!-- test -->
+{% set teams = Team.all() %}
+    <div class="container">
+        <h1>
+            <i class="fa fa-upload"></i>
+            {{_("User File Uploads")}}
+            <a style="float: right; margin-right: 5px; margin-top: 12px;" id="edit-scores-button" class="btn btn-small" data-toggle="modal" href="#edit-scores-modal">
+                <i class="fa fa-fw fa-plus"></i> {{_("add")}} {% if options.banking %}{{_("money")}}{% else %}{{_("points")}}{% end %}
+            </a>
+        </h1>
+        <br/>
+        {% if errors != None and len(errors) != 0 %}
+          {% for error in errors %}
+              <div class="alert alert-error">
+                <a class="close" data-dismiss="alert" href="#">&times;</a>
+                <h4 class="alert-heading">{{ _("ERROR") }}</h4>
+                {{ error }}
+              </div>
+          {% end %}
+        {% end %}
+        
+            <div class="well">
+                {% set index = 0 %}
+                {% for team in teams %}
+                    {% set shares = team.files %}
+                    <h4>
+                        {{ team.name }}
+                        {% if options.banking %}{{_("$")}}{% end %}{{ team.money }}{% if not options.banking %}
+                        <span style="font-size: small;">{{_("points")}}</span>
+                        {% end %}                   
+                    </h4>
+                    <div id="accordion">
+                        {% if not len(shares) %}
+                            <strong>{{ _("There are currently no shared files.") }}</strong>
+                        {% else %}
+                            <div class="accordion" id="accordion2">
+                                {% for share in shares %}
+                                    <div class="accordion-group">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{ index }}">
+                                                <strong>{{ share.file_name }}</strong>
+                                                &nbsp;&nbsp;&nbsp;{{ share.content_type }}
+                                            </a>
+                                        </div>
+                                        <div id="collapse{{ index }}" class="accordion-body collapse">
+                                            <div class="accordion-inner">
+                                                <strong>{{ _("Created") }}: </strong> {{ share.created }}</strong>
+                                                <br />
+                                                <strong>{{ _("File Size") }}: </strong> {{ share.byte_size }} {{ _("bytes") }}
+                                                <br />
+                                                <p>
+                                                    <strong>{{ _("Description") }}:</strong>
+                                                    {{ share.description }}
+                                                </p>
+                                                <br />
+                                                <button id="file-upload-download{{ index }}" class="btn" data-uuid="{{ share.uuid }}" type="button">
+                                                    <i class="fa fa-download"></i>
+                                                    {{ _("Download") }} {{ share.file_name }}
+                                                </button>
+                                                <button id="delete-file-upload-button{{ index }}" class="btn btn-danger" href="#delete-file-upload-modal" data-toggle="modal"
+                                                    data-uuid="{{ share.uuid }}" style="float:right;">
+                                                    <i class="fa fa-trash-o"></i>
+                                                    {{ _("Delete") }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% set index += 1 %}
+                                {% end %}
+                            </div>
+                        {% end %}                        
+                    </div>
+                {% end %}
+            </div>
+        </div>
+    </div>
+{% end %}
